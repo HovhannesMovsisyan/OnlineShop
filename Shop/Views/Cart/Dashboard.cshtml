@@ -1,0 +1,128 @@
+﻿@{
+    List<Cart> items = ViewBag.items as List<Cart>;
+}
+    <section id="main">
+        <div>
+            <h1>DASHBOARD</h1>
+            <h3>Total - ${{total}}</h3>
+            <button class="btn btn-warning">BUY</button>
+            <br />
+            <br />
+            <table class="table table-bordered table-dark">
+                <tr>
+                    <th>id</th>
+                    <th>name</th>
+                    <th>price</th>
+                    <th>quantity</th>
+                    <th>subtotal</th>
+                    <th>actions</th>
+
+                </tr>
+                <tr v-for="item in products">
+                    <td>{{item.product.id}}</td>
+                    <td>{{item.product.name}}</td>
+                    <td>${{item.product.price}}</td>
+                    <td>{{item.quantity}}</td>
+                    <td>${{item.product.price*item.quantity}}</td>
+                    <td>
+                        <input v-on:change="changeQuantity(item)" type="number" v-model="item.quantity" />
+                    </td>
+                    <td><button v-on:click="remove(item)" class="btn btn-danger remove">Remove</button></td>
+                </tr>
+            </table>
+            @using Microsoft.Extensions.Options
+            @inject IOptions<StripeSettings> Stripe
+
+
+        </div>
+    </section>
+<form action="/Cart/Charge" method="POST">
+    <article>
+        <label>Amount: $@ViewBag.total</label>
+    </article>
+    <script src="//checkout.stripe.com/v2/checkout.js"
+            class="stripe-button"
+            data-key="@Stripe.Value.PublishableKey"
+            data-locale="auto"
+            data-description="Sample Charge"
+            data-amount='@ViewBag.total*100'>
+    </script>
+</form>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/3.0.0/fetch.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.js"></script>
+<script>
+    new Vue({
+        el: "#main",
+        data: {
+            products: [],
+            user_id: 0,
+            total: 0
+        },
+        methods: {
+            changeQuantity: function (item) {
+                if (item.quantity == 0) {
+                    this.products.splice(this.products.indexOf(item), 1)
+                }
+                let u = this.user_id;
+                let obj = {
+                    product: +item.product.id,
+                    quantity: +item.quantity,
+                    user_id: +u
+                }
+                fetch("https://localhost:44375/Cart/UpdateQuantity", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(obj)
+                }).then(res => res.json())
+                    .then(res => {
+                        console.log(res)
+                        this.calculate();
+
+
+
+                    });
+
+            },
+            remove: function (item) {
+                fetch("https://localhost:44375/Cart/Remove", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ product: item.product.id, user_id: item.user })
+                }).then(r => {
+                    this.products.splice(this.products.indexOf(item), 1)
+
+                })
+            }
+
+            ,
+            calculate: function () {
+                let s = 0;
+                for (let i = 0; i < this.products.length; i++) {
+                    s += this.products[i].product.price * this.products[i].quantity
+                }
+                this.total = s;
+            }
+        },
+        created: function () {
+
+
+            fetch("https://localhost:44375/Cart/GetCartData", {
+                method: 'POST',
+
+            }).then(res => res.json())
+                .then(res => {
+                    this.products = res;
+                    this.user_id = res[0].user;
+
+                    this.calculate();
+
+                });
+        }
+    })
+</script>

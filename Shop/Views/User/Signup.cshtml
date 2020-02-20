@@ -1,0 +1,29 @@
+﻿
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+<h1>Signup</h1>
+@if(TempData["error"] != null)
+{
+    <p class="text-danger">@TempData["error"]</p>
+}
+<form action="/User/AddUser" method="post"  >
+    <div class="form-group">
+        <label for="email">First Name:</label>
+        <input type="text" class="form-control" name="name">
+    </div>
+    <div class="form-group">
+        <label for="email">Last Name:</label>
+        <input type="text" class="form-control" name="surname">
+    </div>
+    <div class="form-group">
+        <label for="email">Login:</label>
+        <input type="text" class="form-control" name="login">
+    </div>
+    <div class="form-group">
+        <label for="email">Password:</label>
+        <input type="password" class="form-control" name="password">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
